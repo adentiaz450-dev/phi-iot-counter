@@ -1,1 +1,1 @@
-# phi-iot-couter
+# phi-iot-counter
