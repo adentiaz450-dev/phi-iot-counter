@@ -1337,70 +1337,71 @@ function calculateTheoretical(lineIndex) {
         
     window.initChart = () => {
     Chart.register(ChartDataLabels);
-    const ctx = document.getElementById('productionChart').getContext('2d');
-    const labels = [];
-    for(let i=1; i<=15; i++) { if(i!==13) labels.push(`L${i.toString().padStart(2,'0')}`); }
+    let oeeChart = null;
+    .canvas-wrapper {
+    position: relative;
+    height: 300px; /* Sesuaikan tinggi agar enak dilihat di mobile */
+    width: 100%;
+}
 
-    prodChart = new Chart(ctx, {
+function updateOEEChart() {
+    const ctx = document.getElementById('productionChart').getContext('2d');
+    
+    // Ambil Label (Nama Mesin) dan Data OEE (Hasil Kalkulasi)
+    const labels = Object.keys(productionData).map(id => id.toUpperCase());
+    const oeeData = Object.keys(productionData).map(id => {
+        // Logika sederhana OEE: (Actual / (Speed * RunTime)) * 100
+        // Untuk demo, kita gunakan nilai random/placeholder jika data belum dihitung
+        return (Math.random() * (95 - 70) + 70).toFixed(1); 
+    });
+
+    if (oeeChart) {
+        oeeChart.destroy(); // Hapus chart lama sebelum render baru
+    }
+
+    oeeChart = new Chart(ctx, {
         type: 'bar',
-        data: { 
-            labels: labels, 
-            rawActual: [],
-            rawTheo: [],
-            datasets: [
-                { 
-                    label: 'ACTUAL', 
-                    data: [], 
-                    backgroundColor: '#4ade80', 
-                    barPercentage: 0.7,
-                    categoryPercentage: 0.8,
-                    borderRadius: 4, 
-                    datalabels: {
-                        display: true,
-                        color: '#020617', 
-                        anchor: 'center',
-                        align: 'center',
-                        rotation: -90, 
-                        font: { weight: '800', family: "'JetBrains Mono'", size: window.innerWidth < 768 ? 9 : 11 },
-                        formatter: (value, context) => { 
-                            const rawVal = context.chart.data.rawActual[context.dataIndex];
-                            return rawVal > 0 ? rawVal.toLocaleString('id-ID') : ''; 
-                        }
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'OEE %',
+                data: oeeData,
+                backgroundColor: '#38bdf8', // Warna Primary (Light Blue)
+                borderRadius: 6,
+                borderWidth: 0,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }, // Sembunyikan label legend karena hanya ada 1 data
+                datalabels: { // Menampilkan angka % di atas batang
+                    anchor: 'end',
+                    align: 'top',
+                    color: '#facc15', // Warna Warning (Yellow)
+                    font: { weight: 'bold', family: 'JetBrains Mono' },
+                    formatter: (val) => val + '%'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100, // Tetap batasi skala sampai 100 agar proporsional
+                    grid: { color: '#334155' },
+                    ticks: { 
+                        color: '#94a3b8',
+                        callback: (value) => value + '%' 
                     }
                 },
-                { 
-                    label: 'THEORETICAL (OEE)', 
-                    data: [], 
-                    backgroundColor: '#f87171', 
-                    barPercentage: 0.7,
-                    categoryPercentage: 0.8,
-                    borderRadius: 4,
-                    datalabels: {
-                        display: true,
-                        color: '#ffffff', 
-                        anchor: 'center', 
-                        align: 'center',
-                        rotation: -90,
-                        font: { weight: '800', family: "'JetBrains Mono'", size: window.innerWidth < 768 ? 9 : 11 },
-                        formatter: (value, context) => {
-                            const rawTheo = context.chart.data.rawTheo[context.dataIndex];
-                            return rawTheo > 0 ? rawTheo.toLocaleString('id-ID') : ''; 
-                        }
-                    }
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#ffffff', font: { size: 10 } }
                 }
-            ] 
+            }
         },
-        options: { 
-            responsive: true, maintainAspectRatio: false, animation: false, 
-            plugins: { 
-                legend: { display: true, labels: { color: '#94a3b8', font:{family:"'JetBrains Mono'"} } },
-                tooltip: { mode: 'index', intersect: false }
-            }, 
-            scales: { 
-                x: { stacked: true, grid: { display: false }, ticks: { color: '#ffffff', font: { family: "'JetBrains Mono'", size: 10, weight: 'bold' } } },
-                y: { stacked: true, min: 0, max: 100, grid: { color: '#334155', drawBorder: false }, ticks: { display: false } } 
-            } 
-        } 
+        plugins: [ChartDataLabels] // Pastikan plugin datalabels aktif
     });
 };
 
