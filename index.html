@@ -895,49 +895,51 @@
                 document.getElementById('section-oee-grid').style.display = 'block';
             };
 
-          function calculateDetailOEE() {
-    const evalSum = (id) => {
-        const val = document.getElementById(id).value;
-        if (!val) return 0;
-        return val.toString().split('+').reduce((a, b) => Number(a) + (Number(b) || 0), 0);
-    };
+        function calculateDetailOEE() {
+                const evalSum = (id) => {
+                    const val = document.getElementById(id).value;
+                    if (!val) return 0;
+                    return val.toString().split('+').reduce((a, b) => Number(a) + (Number(b) || 0), 0);
+                };
 
-    // --- PERUBAHAN DISINI ---
-    // Ambil Total Waktu dari inputan (yang sudah otomatis dihitung dari Theo/Speed)
-    let totalAvailableTime = parseFloat(document.getElementById('detail_work').value) || 0;
-    
-    // breakdown input (potongan-potongan)
-    const ext = evalSum('detail_ext');
-    const plan = evalSum('detail_plan');
-    const trial = evalSum('detail_trial');
-    const unused = evalSum('detail_unused');
-    const defect = evalSum('detail_defect');
-    const speed = evalSum('detail_speed');
-    const minor = evalSum('detail_minor');
-    const brk = evalSum('detail_break');
+                // 1. Ambil Speed (CPM) Mesin saat ini
+                const rate = lineConfigs[currentOEEIndex-1]?.rate || 0;
 
-    const totalPotongan = ext + plan + trial + unused + defect + speed + minor + brk;
-    
-    // Net Time = Waktu Teoritis (Working Time) - Total Downtime
-    let netTime = totalAvailableTime - totalPotongan;
-    if(netTime < 0) netTime = 0;
+                // 2. Ambil Total Waktu Tersedia (Working Time)
+                let totalAvailableTime = parseFloat(document.getElementById('detail_work').value) || 0;
+                
+                // 3. Hitung Target Gross (Kotor) dalam Satuan Kaleng (Pcs)
+                // Rumus: Waktu x Speed
+                const grossTargetPcs = Math.floor(totalAvailableTime * rate);
 
-    // Hitung Target Baru berdasarkan Net Time x Speed Mesin
-    const actual = latestCounter[`L${currentOEEIndex}`] || 0;
-    const rate = lineConfigs[currentOEEIndex-1]?.rate || 1;
-    
-    const target = Math.floor(netTime * rate);
-    
-    let oeeScore = 0;
-    if (target > 0) {
-        oeeScore = ((actual / target) * 100).toFixed(1);
-    }
-    // Batasi max 100% jika diinginkan, atau biarkan lebih jika actual > target
-    if(oeeScore > 100) oeeScore = 100; 
+                // 4. GROUP A: Konversi Input Menit ke PCS (Sesuai Perintah)
+                // Field: Quality Defect, Speed Loss, Minor Stop, Breakdown
+                // Rumus: Input (Min) x Speed (CPM) = Lost Pcs
+                const minutesToConvert = evalSum('detail_defect') + evalSum('detail_speed') + evalSum('detail_minor') + evalSum('detail_break');
+                const lostPcsConverted = Math.floor(minutesToConvert * rate);
 
-    document.getElementById('detail_run_val').innerText = target.toLocaleString('id-ID'); 
-    document.getElementById('detail_oee_score').innerText = oeeScore + "%";
-}
+                // 5. GROUP B: Konversi Sisa Downtime Lainnya (Tetap dikonversi agar satuan sama)
+                // Field: External Stop, Plan Downtime, Trial, Unused
+                const otherMinutes = evalSum('detail_ext') + evalSum('detail_plan') + evalSum('detail_trial') + evalSum('detail_unused');
+                const lostPcsOther = Math.floor(otherMinutes * rate);
+
+                // 6. Hitung Target Nett (Pcs)
+                // Target = Gross Pcs - (Lost Pcs Group A + Lost Pcs Group B)
+                let targetNettPcs = grossTargetPcs - lostPcsConverted - lostPcsOther;
+                if(targetNettPcs < 0) targetNettPcs = 0;
+
+                // 7. Hitung OEE Score
+                const actual = latestCounter[`L${currentOEEIndex}`] || 0;
+                let oeeScore = 0;
+                if (targetNettPcs > 0) {
+                    oeeScore = ((actual / targetNettPcs) * 100).toFixed(1);
+                }
+                if(oeeScore > 100) oeeScore = 100; 
+
+                // 8. Update Tampilan
+                document.getElementById('detail_run_val').innerText = targetNettPcs.toLocaleString('id-ID'); 
+                document.getElementById('detail_oee_score').innerText = oeeScore + "%";
+            }
 
    window.saveCurrentLineOEE = async () => {
     const idx = currentOEEIndex;
