@@ -722,10 +722,14 @@
         };
         window.logout = () => { sessionStorage.clear(); location.reload(); };
 
-        window.onload = () => {
+      // --- PERBAIKAN: Ubah window.onload menjadi fungsi init yang langsung dipanggil ---
+        const initApp = () => {
+            // Cek tampilan login awal
             if(document.getElementById("loginPage") && document.getElementById("loginPage").style.display !== "none") {
                 if(document.getElementById("username")) document.getElementById("username").focus();
             }
+
+            // Cek status login dari Session Storage
             if(sessionStorage.getItem("login") === "1") {
                 document.getElementById("loginPage").style.display = "none";
                 document.getElementById("dashboardPage").style.display = "block";
@@ -761,11 +765,15 @@
                 setInterval(updateUI, 1000);
                 
                 ['detail_work','detail_ext','detail_plan','detail_trial','detail_break','detail_speed','detail_minor'].forEach(id => {
-                    document.getElementById(id).addEventListener('input', calculateDetailOEE);
+                    const el = document.getElementById(id);
+                    if(el) el.addEventListener('input', calculateDetailOEE);
                 });
             }
         };
 
+        // Panggil fungsi inisialisasi segera
+        // (Aman dilakukan karena script type="module" berjalan setelah HTML selesai di-parse)
+        initApp();
         // --- OEE LOGIC ---
         window.handleOEEEnter = (e, nextId) => {
             if (e.key === 'Enter') {
