@@ -722,30 +722,36 @@
         };
         window.logout = () => { sessionStorage.clear(); location.reload(); };
 
-      // --- PERBAIKAN: Ubah window.onload menjadi fungsi init yang langsung dipanggil ---
-        const initApp = () => {
-            // Cek tampilan login awal
+// --- PERBAIKAN START: Ganti window.onload dengan Immediate Function ---
+        
+        const runSystemInit = () => {
+            // 1. Cek Fokus Login Form (Jika belum login)
             if(document.getElementById("loginPage") && document.getElementById("loginPage").style.display !== "none") {
                 if(document.getElementById("username")) document.getElementById("username").focus();
             }
 
-            // Cek status login dari Session Storage
+            // 2. Cek Status Login (Jika sudah login)
             if(sessionStorage.getItem("login") === "1") {
+                // Sembunyikan Login, Tampilkan Dashboard
                 document.getElementById("loginPage").style.display = "none";
                 document.getElementById("dashboardPage").style.display = "block";
                 
+                // Cek Role Viewer
                 const userRole = sessionStorage.getItem("role");
                 if(userRole === "viewer") {
                     document.body.classList.add("mode-view");
                 }
 
+                // Load Config Auto Reset
                 const savedReset = localStorage.getItem("phi_autoreset");
                 if(savedReset) { try { autoResetConfig = JSON.parse(savedReset); } catch(e){} }
                 updateResetDisplay();
 
+                // Generate Elemen UI
                 generateCards(); 
                 generateOEESelectors(); 
                 
+                // Atur Tampilan berdasarkan Lebar Layar
                 if(window.innerWidth > 768) {
                     document.getElementById('section-lines').style.display = 'block';
                     document.getElementById('section-totals').style.display = 'block';
@@ -754,6 +760,7 @@
                     document.getElementById('section-lines').style.display = 'block';
                 }
                 
+                // Inisialisasi Data & Koneksi
                 syncConfigRates(); 
                 initChart(); 
                 syncGlobalStartTime();
@@ -761,9 +768,12 @@
                 loadCache(); 
                 loadOEEData(); 
                 connectMQTT();
+                
+                // Jalankan Interval Update
                 setInterval(updateClock, 1000);
                 setInterval(updateUI, 1000);
                 
+                // Pasang Event Listener untuk Input OEE
                 ['detail_work','detail_ext','detail_plan','detail_trial','detail_break','detail_speed','detail_minor'].forEach(id => {
                     const el = document.getElementById(id);
                     if(el) el.addEventListener('input', calculateDetailOEE);
@@ -771,9 +781,8 @@
             }
         };
 
-        // Panggil fungsi inisialisasi segera
-        // (Aman dilakukan karena script type="module" berjalan setelah HTML selesai di-parse)
-        initApp();
+        // Panggil fungsi ini secara langsung (Tanpa menunggu event load)
+        runSystemInit();
         // --- OEE LOGIC ---
         window.handleOEEEnter = (e, nextId) => {
             if (e.key === 'Enter') {
