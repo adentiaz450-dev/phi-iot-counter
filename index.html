@@ -658,8 +658,8 @@
         </div>
 
     <script type="module">
-            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-            import { getDatabase, ref, set, onValue, push, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+            import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-analytics.js";
 
             const mqttConfig = {
                 host: "broker.emqx.io",
@@ -677,9 +677,10 @@
                 databaseURL: "https://counter-iot-phi-default-rtdb.asia-southeast1.firebasedatabase.app",
                 projectId: "counter-iot-phi",
                 appId: "1:93383053218:web:efca28132c3e925a866cfb"
+                measurementId: "G-JD3JWEMDP6"
             };
             const app = initializeApp(firebaseConfig);
-            const database = getDatabase(app);
+            const analytics = getAnalytics(app);
 
             let latestCounter = {};
             let globalStartTime = null; 
