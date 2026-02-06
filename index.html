@@ -659,7 +659,7 @@
 
     <script type="module">
             import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-            import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-analytics.js";
+            import { getDatabase, ref, set, onValue, push, get } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
 
             const mqttConfig = {
                 host: "broker.emqx.io",
@@ -680,7 +680,7 @@
                 measurementId: "G-JD3JWEMDP6"
             };
             const app = initializeApp(firebaseConfig);
-            const analytics = getAnalytics(app);
+            const database = getDatabase(app);
 
             let latestCounter = {};
             let globalStartTime = null; 
